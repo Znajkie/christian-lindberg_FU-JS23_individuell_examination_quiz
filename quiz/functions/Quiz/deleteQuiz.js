@@ -4,17 +4,15 @@ const { validateToken } = require('../../middleware/auth');
 const { sendResponse } = require('../../responses/index');
 const { middyTimeoutConfig } = require('../../services/middy');
 
-async function getQuizById(quizId) {
+async function deleteQuizById(quizId) {
   const params = {
     TableName: 'QuizTable',
-    KeyConditionExpression: 'quizId = :quizId',
-    ExpressionAttributeValues: {
-      ':quizId': quizId,
+    Key: {
+      quizId: quizId,
     },
   };
 
-  const result = await db.query(params);
-  return result.Items.length > 0 ? result.Items[0] : null;
+  await db.delete(params);
 }
 
 const handler = middy(middyTimeoutConfig)
@@ -30,17 +28,11 @@ const handler = middy(middyTimeoutConfig)
       });
     }
 
-    const dbQuiz = await getQuizById(quizId);
-
-    if (!dbQuiz) {
-      return sendResponse({
-        statusCode: 404,
-        message: 'Quiz not found',
-      });
-    }
+    await deleteQuizById(quizId);
 
     return sendResponse({
-      object: dbQuiz,
+      statusCode: 200,
+      message: 'Quiz deleted successfully',
     });
   });
 

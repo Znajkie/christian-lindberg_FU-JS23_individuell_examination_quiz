@@ -11,7 +11,9 @@ provider:
       Action:
         - dynamodb:PutItem
         - dynamodb:GetItem
+        - dynamodb:DeleteItem
         - dynamodb:Scan
+        - dynamodb:Query
       Resource:
         - arn:aws:dynamodb:eu-north-1:615299752906:table/UserTable
         - arn:aws:dynamodb:eu-north-1:615299752906:table/QuizTable
@@ -57,6 +59,12 @@ functions:
       - httpApi:
           path: /quiz
           method: get
+  DeleteQuiz:
+    handler: functions/Quiz/deleteQuiz.handler
+    events:
+      - httpApi:
+          path: /quiz/{quizId}
+          method: delete
 resources:
   Resources:
     jwtAccounts:
