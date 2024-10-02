@@ -1,0 +1,83 @@
+org: serverlessquiz
+
+service: quiz
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: eu-north-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+        - dynamodb:GetItem
+        - dynamodb:Scan
+      Resource:
+        - arn:aws:dynamodb:eu-north-1:615299752906:table/UserTable
+        - arn:aws:dynamodb:eu-north-1:615299752906:table/QuizTable
+
+functions:
+  Login:
+    handler: functions/Login/index.handler
+    environment:
+      SECRET: hej
+    events:
+      - httpApi:
+          path: /auth/login
+          method: post
+  Signup:
+    handler: functions/Signup/index.handler
+    events:
+      - httpApi:
+          path: /auth/signup
+          method: post
+  GetUser:
+    handler: functions/GetUser/index.handler
+    environment:
+      SECRET: hej
+    events:
+      - httpApi:
+          path: /user
+          method: get
+  CreateQuiz:
+    handler: functions/Quiz/createQuiz.handler
+    events:
+      - httpApi:
+          path: /quiz
+          method: post
+  GetQuiz:
+    handler: functions/Quiz/getQuiz.handler
+    events:
+      - httpApi:
+          path: /quiz/{quizId}
+          method: get
+  GetAllQuiz:
+    handler: functions/Quiz/getAllQuiz.handler
+    events:
+      - httpApi:
+          path: /quiz
+          method: get
+resources:
+  Resources:
+    jwtAccounts:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: UserTable
+        AttributeDefinitions:
+          - AttributeName: username
+            AttributeType: S
+        KeySchema:
+          - AttributeName: username
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+    QuizTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: QuizTable
+        AttributeDefinitions:
+          - AttributeName: quizId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: quizId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
