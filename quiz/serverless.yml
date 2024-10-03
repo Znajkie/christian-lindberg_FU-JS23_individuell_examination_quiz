@@ -12,6 +12,7 @@ provider:
         - dynamodb:PutItem
         - dynamodb:GetItem
         - dynamodb:DeleteItem
+        - dynamodb:UpdateItem
         - dynamodb:Scan
         - dynamodb:Query
       Resource:
@@ -65,6 +66,12 @@ functions:
       - httpApi:
           path: /quiz/{quizId}
           method: delete
+  QuestionQuiz:
+    handler: functions/Quiz/questionQuiz.handler
+    events:
+      - httpApi:
+          path: /quiz/question
+          method: post
 resources:
   Resources:
     jwtAccounts:

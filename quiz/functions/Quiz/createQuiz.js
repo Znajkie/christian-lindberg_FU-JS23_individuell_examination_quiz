@@ -1,31 +1,32 @@
 const { sendResponse, sendError } = require('../../responses/index');
 const { db } = require('../../services/db');
+const middy = require('@middy/core');
+const { middyTimeoutConfig } = require('../../services/middy');
+const { validateToken } = require('../../middleware/auth');
+const { v4: uuidv4 } = require('uuid');
 
-exports.handler = async (event) => {
+const createQuiz = async (event) => {
   try {
-    const { userId, quizId, question, answer, longitude, latitude } = JSON.parse(event.body);
+    const { name, username } = JSON.parse(event.body);
 
- await db.put({
-   TableName: 'QuizTable',
-   Item: {
-     userId: userId,
-     quizId: quizId,
-     questions: [
-       {
-         question: question,
-         answer: answer,
-         location: {
-           longitude: longitude,
-           latitude: latitude,
-         },
-       },
-     ],
-   },
- });
+    await db.put({
+      TableName: 'QuizTable',
+      Item: {
+        name: name,
+        username: username,
+        quizId: uuidv4(),
+        questions: [],
+      }
+    })
 
     return sendResponse({ success: true });
   } catch (error) {
-    console.error('Error creating user:', error);
+    console.error('Error creating quiz:', error);
     return sendError(500, { message: 'Internal server error.' });
   }
 };
+
+
+const handler = middy(middyTimeoutConfig).use(validateToken).handler(createQuiz);
+
+module.exports = { handler };

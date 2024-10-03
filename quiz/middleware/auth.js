@@ -1,18 +1,29 @@
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const validateToken = {
   before: async (request) => {
     try {
-      const token = request.event.headers.authorization.replace("Bearer ", "");
+      const authHeader = request.event.headers.authorization;
 
-      if (!token) throw Error();
+      if (!authHeader) {
+        throw new Error('Unauthorized');
+      }
+
+      const token = authHeader.replace('Bearer ', '');
+
+      if (!token) {
+        throw new Error('Unauthorized');
+      }
 
       const data = jwt.verify(token, process.env.SECRET);
       request.event.username = data.username;
-
-      return request.response;
-    } catch (error) {}
+    } catch (error) {
+      return {
+        statusCode: 401,
+        body: JSON.stringify({ message: 'Unauthorized, no valid token' }),
+      };
+    }
   },
 };
 
