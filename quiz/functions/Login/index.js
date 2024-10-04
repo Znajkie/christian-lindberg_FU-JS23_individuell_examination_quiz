@@ -1,8 +1,9 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-// const { db } = require('../../services/db');
+const middy = require('@middy/core');
 const { sendResponse, sendError } = require('../../responses/index');
 const { getUser } = require('../../helpers/userHelper');
+const { middyTimeoutConfig } = require('../../services/middy');
 require('dotenv').config();
 
 async function checkPassword(password, user) {
@@ -18,7 +19,7 @@ function signToken(user) {
   return token;
 }
 
-exports.handler = async (event) => {
+const loginHandler = async (event) => {
   const { username, password } = JSON.parse(event.body);
   const user = await getUser(username);
   const correctPassword = await checkPassword(password, user);
@@ -26,6 +27,9 @@ exports.handler = async (event) => {
   if (!correctPassword) return sendError(401, 'Wrong username or password');
 
   const token = signToken(user);
-
-  return sendResponse({ success: true, token: token });
+  console.log('Logged in:', user.username);
+  console.log('Token:', token);
+  return sendResponse({ success: true, token: token, username: user.username });
 };
+
+exports.handler = middy(middyTimeoutConfig).handler(loginHandler);

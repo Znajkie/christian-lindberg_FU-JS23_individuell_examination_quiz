@@ -5,7 +5,7 @@ service: quiz
 provider:
   name: aws
   runtime: nodejs20.x
-  region: eu-north-1
+  region: ${env:AWS_REGION}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -18,12 +18,16 @@ provider:
       Resource:
         - arn:aws:dynamodb:eu-north-1:615299752906:table/UserTable
         - arn:aws:dynamodb:eu-north-1:615299752906:table/QuizTable
+        - arn:aws:dynamodb:eu-north-1:615299752906:table/ScoreTable
+  environment:
+    SECRET: ${env:SECRET}
+    USER_TABLE: UserTable
+    QUIZ_TABLE: QuizTable
+    SCORE_TABLE: ScoreTable
 
 functions:
   Login:
     handler: functions/Login/index.handler
-    environment:
-      SECRET: hej
     events:
       - httpApi:
           path: /auth/login
@@ -34,14 +38,6 @@ functions:
       - httpApi:
           path: /auth/signup
           method: post
-  GetUser:
-    handler: functions/GetUser/index.handler
-    environment:
-      SECRET: hej
-    events:
-      - httpApi:
-          path: /user
-          method: get
   CreateQuiz:
     handler: functions/Quiz/createQuiz.handler
     events:
@@ -66,15 +62,27 @@ functions:
       - httpApi:
           path: /quiz/{quizId}
           method: delete
-  QuestionQuiz:
+  addQuestion:
     handler: functions/Quiz/questionQuiz.handler
     events:
       - httpApi:
           path: /quiz/question
           method: post
+  getLeaderboard:
+    handler: functions/Leaderboard/leaderboard.handler
+    events:
+      - httpApi:
+          path: /leaderboard/{quizId}
+          method: get
+  AddPoint:
+    handler: functions/Leaderboard/points.handler
+    events:
+      - httpApi:
+          path: /leaderboard/points
+          method: post
 resources:
   Resources:
-    jwtAccounts:
+    UserTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: UserTable
@@ -85,6 +93,7 @@ resources:
           - AttributeName: username
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
+
     QuizTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -95,4 +104,20 @@ resources:
         KeySchema:
           - AttributeName: quizId
             KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    ScoreTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ScoreTable
+        AttributeDefinitions:
+          - AttributeName: quizId
+            AttributeType: S
+          - AttributeName: username
+            AttributeType: S
+        KeySchema:
+          - AttributeName: quizId
+            KeyType: HASH
+          - AttributeName: username
+            KeyType: RANGE
         BillingMode: PAY_PER_REQUEST

@@ -1,7 +1,6 @@
 const { db } = require('../services/db');
 
 async function getUser(username) {
-  console.log('username', username);
 
   const { Item } = await db.get({
     TableName: 'UserTable',
